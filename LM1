@@ -1,15 +1,6 @@
+"use client";
+
 import React, { useMemo, useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
-import { FolderOpen, Scale, FileText, IndianRupee, BarChart3, Plus, Upload, Search } from "lucide-react";
 
 const caseTypes = [
   "Civil",
@@ -37,6 +28,7 @@ const courts = [
 ];
 
 const stages = [
+  "Advisory",
   "Pre-Litigation",
   "Notice Stage",
   "Filing",
@@ -51,13 +43,18 @@ const stages = [
 const starterCases = [
   {
     id: 1,
-    caseNumber: "LIT-2026-0001",
+    internalCaseNumber: "LIT-2026-0001",
+    actualCourtCaseNumber: "CS/241/2026",
     caseType: "Civil",
     partyName: "ABC Developers Pvt. Ltd. v. Rohan Sharma",
     court: "District Court",
+    litigationCity: "Raipur",
     stage: "Evidence",
+    nextHearingDate: "2026-05-06",
     clientFeesPaid: 150000,
     amountSpent: 72000,
+    clientEmail: "client1@example.com",
+    clientWhatsapp: "+919999999999",
     notes: "Recovery suit relating to construction dues.",
     documents: [
       { name: "Plaint.pdf", size: "2.4 MB", category: "Pleadings" },
@@ -67,13 +64,18 @@ const starterCases = [
   },
   {
     id: 2,
-    caseNumber: "LIT-2026-0002",
+    internalCaseNumber: "LIT-2026-0002",
+    actualCourtCaseNumber: "CC/88/2026",
     caseType: "Consumer",
     partyName: "Priya Verma v. XYZ Motors",
     court: "Consumer Forum",
+    litigationCity: "Bilaspur",
     stage: "Arguments",
+    nextHearingDate: "2026-05-14",
     clientFeesPaid: 50000,
     amountSpent: 18500,
+    clientEmail: "client2@example.com",
+    clientWhatsapp: "+919888888888",
     notes: "Vehicle defect and deficiency in service matter.",
     documents: [{ name: "Complaint.pdf", size: "1.2 MB", category: "Pleadings" }],
     createdAt: "2026-04-21",
@@ -94,16 +96,262 @@ function generateCaseNumber(existing) {
   return `LIT-${year}-${next}`;
 }
 
+function formatDate(value) {
+  if (!value) return "—";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return date.toLocaleDateString("en-IN", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
+}
+
+function generateInvoice(caseItem) {
+  const balance = Number(caseItem.clientFeesPaid || 0) - Number(caseItem.amountSpent || 0);
+  return `Invoice / Fee Statement\n\nBrand: Sandeep's Linklegal (OPC) Pvt. Ltd.\nInternal File No.: ${caseItem.internalCaseNumber}\nCourt Case No.: ${caseItem.actualCourtCaseNumber || "Not allotted / not entered"}\nMatter: ${caseItem.partyName}\nCourt: ${caseItem.court}\nCity: ${caseItem.litigationCity || "—"}\nStage: ${caseItem.stage}\nFees Paid by Client: ${currency(caseItem.clientFeesPaid)}\nAmount Spent on Matter: ${currency(caseItem.amountSpent)}\nCurrent Net Position: ${currency(balance)}\nNext Hearing Date: ${formatDate(caseItem.nextHearingDate)}\n\nThis is a system-generated invoice statement from Sandeep's Linklegal (OPC) Pvt. Ltd.`;
+}
+
+function generateCaseUpdate(caseItem) {
+  return `Case Update\n\nBrand: Sandeep's Linklegal (OPC) Pvt. Ltd.\nInternal File No.: ${caseItem.internalCaseNumber}\nCourt Case No.: ${caseItem.actualCourtCaseNumber || "Not allotted / not entered"}\nMatter: ${caseItem.partyName}\nCourt: ${caseItem.court}\nCity: ${caseItem.litigationCity || "—"}\nCurrent Stage: ${caseItem.stage}\nNext Hearing Date: ${formatDate(caseItem.nextHearingDate)}\nNotes: ${caseItem.notes || "No remarks added."}\n\nThis update is system-generated for client communication.`;
+}
+
+const styles = {
+  page: {
+    minHeight: "100vh",
+    background: "#f8fafc",
+    padding: 24,
+    fontFamily: "Arial, sans-serif",
+    color: "#0f172a",
+  },
+  container: {
+    maxWidth: 1400,
+    margin: "0 auto",
+  },
+  brand: {
+    display: "inline-block",
+    background: "#ffffff",
+    border: "1px solid #e2e8f0",
+    borderRadius: 999,
+    padding: "8px 14px",
+    fontSize: 14,
+    fontWeight: 700,
+    marginBottom: 12,
+  },
+  heading: {
+    fontSize: 32,
+    fontWeight: 800,
+    margin: 0,
+  },
+  subheading: {
+    color: "#475569",
+    marginTop: 8,
+    marginBottom: 24,
+  },
+  grid4: {
+    display: "grid",
+    gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+    gap: 16,
+    marginBottom: 24,
+  },
+  card: {
+    background: "#ffffff",
+    border: "1px solid #e2e8f0",
+    borderRadius: 16,
+    padding: 18,
+    boxShadow: "0 1px 2px rgba(0,0,0,0.04)",
+  },
+  cardTitle: {
+    fontSize: 14,
+    color: "#64748b",
+    marginBottom: 8,
+  },
+  cardValue: {
+    fontSize: 28,
+    fontWeight: 800,
+  },
+  tabs: {
+    display: "flex",
+    flexWrap: "wrap",
+    gap: 10,
+    marginBottom: 18,
+  },
+  tabButton: (active) => ({
+    background: active ? "#0f172a" : "#ffffff",
+    color: active ? "#ffffff" : "#0f172a",
+    border: "1px solid #cbd5e1",
+    borderRadius: 12,
+    padding: "10px 14px",
+    cursor: "pointer",
+    fontWeight: 700,
+  }),
+  sectionTitle: {
+    fontSize: 22,
+    fontWeight: 800,
+    marginBottom: 18,
+  },
+  formGrid: {
+    display: "grid",
+    gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",
+    gap: 16,
+  },
+  fullWidth: {
+    gridColumn: "1 / -1",
+  },
+  label: {
+    display: "block",
+    fontSize: 14,
+    fontWeight: 700,
+    marginBottom: 6,
+  },
+  input: {
+    width: "100%",
+    padding: "11px 12px",
+    border: "1px solid #cbd5e1",
+    borderRadius: 10,
+    fontSize: 14,
+    boxSizing: "border-box",
+    background: "#ffffff",
+  },
+  textarea: {
+    width: "100%",
+    minHeight: 110,
+    padding: 12,
+    border: "1px solid #cbd5e1",
+    borderRadius: 10,
+    fontSize: 14,
+    boxSizing: "border-box",
+    resize: "vertical",
+    background: "#ffffff",
+  },
+  primaryButton: {
+    background: "#0f172a",
+    color: "#ffffff",
+    border: "none",
+    borderRadius: 12,
+    padding: "12px 16px",
+    fontWeight: 700,
+    cursor: "pointer",
+  },
+  secondaryButton: {
+    background: "#ffffff",
+    color: "#0f172a",
+    border: "1px solid #cbd5e1",
+    borderRadius: 10,
+    padding: "9px 12px",
+    fontWeight: 700,
+    cursor: "pointer",
+  },
+  search: {
+    width: "100%",
+    maxWidth: 340,
+    padding: "11px 12px",
+    border: "1px solid #cbd5e1",
+    borderRadius: 10,
+    fontSize: 14,
+  },
+  tableWrap: {
+    overflowX: "auto",
+    border: "1px solid #e2e8f0",
+    borderRadius: 16,
+    background: "#ffffff",
+  },
+  table: {
+    width: "100%",
+    borderCollapse: "collapse",
+    minWidth: 1100,
+  },
+  th: {
+    textAlign: "left",
+    padding: 12,
+    borderBottom: "1px solid #e2e8f0",
+    fontSize: 13,
+    color: "#475569",
+    background: "#f8fafc",
+  },
+  td: {
+    padding: 12,
+    borderBottom: "1px solid #e2e8f0",
+    fontSize: 14,
+    verticalAlign: "top",
+  },
+  badge: {
+    display: "inline-block",
+    border: "1px solid #cbd5e1",
+    borderRadius: 999,
+    padding: "4px 10px",
+    fontSize: 12,
+    background: "#ffffff",
+  },
+  actionRow: {
+    display: "flex",
+    flexWrap: "wrap",
+    gap: 8,
+  },
+  reportGrid: {
+    display: "grid",
+    gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
+    gap: 16,
+  },
+  progressTrack: {
+    width: "100%",
+    background: "#e2e8f0",
+    borderRadius: 999,
+    height: 10,
+    overflow: "hidden",
+    marginTop: 8,
+  },
+  progressFill: (value) => ({
+    width: `${value}%`,
+    background: "#0f172a",
+    height: "100%",
+  }),
+  modalOverlay: {
+    position: "fixed",
+    inset: 0,
+    background: "rgba(15, 23, 42, 0.45)",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 20,
+    zIndex: 1000,
+  },
+  modal: {
+    width: "100%",
+    maxWidth: 820,
+    background: "#ffffff",
+    borderRadius: 18,
+    padding: 20,
+    boxShadow: "0 20px 40px rgba(0,0,0,0.18)",
+  },
+  modalTitle: {
+    fontSize: 22,
+    fontWeight: 800,
+    marginBottom: 12,
+  },
+  smallText: {
+    color: "#64748b",
+    fontSize: 13,
+  },
+};
+
 export default function LitigationManagementWebsite() {
   const [cases, setCases] = useState(starterCases);
   const [search, setSearch] = useState("");
+  const [tab, setTab] = useState("new-case");
+  const [modal, setModal] = useState({ open: false, title: "", body: "", selected: null });
   const [form, setForm] = useState({
     caseType: "Civil",
     partyName: "",
     court: "District Court",
-    stage: "Filing",
+    litigationCity: "",
+    stage: "Pre-Litigation",
+    actualCourtCaseNumber: "",
+    nextHearingDate: "",
     clientFeesPaid: "",
     amountSpent: "",
+    clientEmail: "",
+    clientWhatsapp: "",
     notes: "",
     documents: [],
   });
@@ -112,11 +360,13 @@ export default function LitigationManagementWebsite() {
     const q = search.toLowerCase();
     return cases.filter(
       (c) =>
-        c.caseNumber.toLowerCase().includes(q) ||
+        c.internalCaseNumber.toLowerCase().includes(q) ||
+        (c.actualCourtCaseNumber || "").toLowerCase().includes(q) ||
         c.partyName.toLowerCase().includes(q) ||
         c.caseType.toLowerCase().includes(q) ||
         c.court.toLowerCase().includes(q) ||
-        c.stage.toLowerCase().includes(q)
+        c.stage.toLowerCase().includes(q) ||
+        (c.litigationCity || "").toLowerCase().includes(q)
     );
   }, [cases, search]);
 
@@ -136,7 +386,17 @@ export default function LitigationManagementWebsite() {
       .filter((x) => x.count > 0);
   }, [cases]);
 
-  const handleFileUpload = (e) => {
+  const stageBreakdown = useMemo(() => {
+    return stages
+      .map((stage) => ({ stage, count: cases.filter((c) => c.stage === stage).length }))
+      .filter((item) => item.count > 0);
+  }, [cases]);
+
+  function updateForm(field, value) {
+    setForm((prev) => ({ ...prev, [field]: value }));
+  }
+
+  function handleFileUpload(e) {
     const files = Array.from(e.target.files || []);
     const mapped = files.map((file) => ({
       name: file.name,
@@ -144,20 +404,28 @@ export default function LitigationManagementWebsite() {
       category: "Uploaded Document",
     }));
     setForm((prev) => ({ ...prev, documents: [...prev.documents, ...mapped] }));
-  };
+  }
 
-  const handleCreateCase = () => {
-    if (!form.partyName.trim()) return;
+  function handleCreateCase() {
+    if (!form.partyName.trim()) {
+      alert("Please enter Party Name.");
+      return;
+    }
 
     const newCase = {
       id: Date.now(),
-      caseNumber: generateCaseNumber(cases),
+      internalCaseNumber: generateCaseNumber(cases),
+      actualCourtCaseNumber: form.actualCourtCaseNumber,
       caseType: form.caseType,
       partyName: form.partyName,
       court: form.court,
+      litigationCity: form.litigationCity,
       stage: form.stage,
+      nextHearingDate: form.nextHearingDate,
       clientFeesPaid: Number(form.clientFeesPaid || 0),
       amountSpent: Number(form.amountSpent || 0),
+      clientEmail: form.clientEmail,
+      clientWhatsapp: form.clientWhatsapp,
       notes: form.notes,
       documents: form.documents,
       createdAt: new Date().toISOString().slice(0, 10),
@@ -168,311 +436,321 @@ export default function LitigationManagementWebsite() {
       caseType: "Civil",
       partyName: "",
       court: "District Court",
-      stage: "Filing",
+      litigationCity: "",
+      stage: "Pre-Litigation",
+      actualCourtCaseNumber: "",
+      nextHearingDate: "",
       clientFeesPaid: "",
       amountSpent: "",
+      clientEmail: "",
+      clientWhatsapp: "",
       notes: "",
       documents: [],
     });
-  };
+    setTab("case-register");
+  }
+
+  function openInvoice(caseItem) {
+    setModal({
+      open: true,
+      title: "Invoice Preview",
+      body: generateInvoice(caseItem),
+      selected: caseItem,
+    });
+  }
+
+  function openUpdate(caseItem) {
+    setModal({
+      open: true,
+      title: "Case Update Preview",
+      body: generateCaseUpdate(caseItem),
+      selected: caseItem,
+    });
+  }
+
+  function openEmailDraft(subject, body, email) {
+    if (!email) {
+      alert("Client email is missing for this matter.");
+      return;
+    }
+    window.open(`mailto:${email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`);
+  }
+
+  function openWhatsappDraft(body, whatsapp) {
+    const cleanNumber = (whatsapp || "").replace(/[^\d]/g, "");
+    if (!cleanNumber) {
+      alert("Client WhatsApp number is missing for this matter.");
+      return;
+    }
+    window.open(`https://wa.me/${cleanNumber}?text=${encodeURIComponent(body)}`, "_blank");
+  }
 
   return (
-    <div className="min-h-screen bg-slate-50 p-4 md:p-8">
-      <div className="mx-auto max-w-7xl space-y-6">
-        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight text-slate-900">Litigation Management</h1>
-            <p className="text-sm text-slate-600">
-              Manage cases, documents, court stages, client fees, expenditure and reporting in one place.
-            </p>
+    <div style={styles.page}>
+      <div style={styles.container}>
+        <div style={styles.brand}>Sandeep&apos;s Linklegal (OPC) Pvt. Ltd.</div>
+        <h1 style={styles.heading}>Litigation Management</h1>
+        <p style={styles.subheading}>
+          Manage litigation files, hearing dates, cities, courts, billing and client communication in one place.
+        </p>
+
+        <div style={styles.grid4}>
+          <div style={styles.card}>
+            <div style={styles.cardTitle}>Total Cases</div>
+            <div style={styles.cardValue}>{totals.totalCases}</div>
           </div>
-          <div className="flex items-center gap-2 rounded-2xl bg-white p-3 shadow-sm">
-            <Scale className="h-5 w-5" />
-            <span className="text-sm font-medium">Legal Operations Dashboard</span>
+          <div style={styles.card}>
+            <div style={styles.cardTitle}>Open Cases</div>
+            <div style={styles.cardValue}>{totals.openCases}</div>
+          </div>
+          <div style={styles.card}>
+            <div style={styles.cardTitle}>Fees Paid by Clients</div>
+            <div style={styles.cardValue}>{currency(totals.totalFees)}</div>
+          </div>
+          <div style={styles.card}>
+            <div style={styles.cardTitle}>Amount Spent</div>
+            <div style={styles.cardValue}>{currency(totals.totalSpent)}</div>
           </div>
         </div>
 
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-          <Card className="rounded-2xl shadow-sm">
-            <CardContent className="flex items-center justify-between p-6">
-              <div>
-                <p className="text-sm text-slate-500">Total Cases</p>
-                <p className="text-3xl font-bold">{totals.totalCases}</p>
-              </div>
-              <FolderOpen className="h-8 w-8 text-slate-500" />
-            </CardContent>
-          </Card>
-          <Card className="rounded-2xl shadow-sm">
-            <CardContent className="flex items-center justify-between p-6">
-              <div>
-                <p className="text-sm text-slate-500">Open Cases</p>
-                <p className="text-3xl font-bold">{totals.openCases}</p>
-              </div>
-              <FileText className="h-8 w-8 text-slate-500" />
-            </CardContent>
-          </Card>
-          <Card className="rounded-2xl shadow-sm">
-            <CardContent className="flex items-center justify-between p-6">
-              <div>
-                <p className="text-sm text-slate-500">Fees Paid by Clients</p>
-                <p className="text-2xl font-bold">{currency(totals.totalFees)}</p>
-              </div>
-              <IndianRupee className="h-8 w-8 text-slate-500" />
-            </CardContent>
-          </Card>
-          <Card className="rounded-2xl shadow-sm">
-            <CardContent className="flex items-center justify-between p-6">
-              <div>
-                <p className="text-sm text-slate-500">Amount Spent</p>
-                <p className="text-2xl font-bold">{currency(totals.totalSpent)}</p>
-              </div>
-              <BarChart3 className="h-8 w-8 text-slate-500" />
-            </CardContent>
-          </Card>
+        <div style={styles.tabs}>
+          <button type="button" style={styles.tabButton(tab === "new-case")} onClick={() => setTab("new-case")}>New Case</button>
+          <button type="button" style={styles.tabButton(tab === "case-register")} onClick={() => setTab("case-register")}>Case Register</button>
+          <button type="button" style={styles.tabButton(tab === "reporting")} onClick={() => setTab("reporting")}>Reporting</button>
         </div>
 
-        <Tabs defaultValue="new-case" className="space-y-4">
-          <TabsList className="grid w-full grid-cols-1 gap-2 rounded-2xl bg-transparent p-0 md:grid-cols-3">
-            <TabsTrigger value="new-case" className="rounded-2xl border bg-white py-3 shadow-sm">New Case</TabsTrigger>
-            <TabsTrigger value="case-register" className="rounded-2xl border bg-white py-3 shadow-sm">Case Register</TabsTrigger>
-            <TabsTrigger value="reporting" className="rounded-2xl border bg-white py-3 shadow-sm">Reporting</TabsTrigger>
-          </TabsList>
+        {tab === "new-case" && (
+          <div style={styles.card}>
+            <div style={styles.sectionTitle}>Create Litigation File</div>
+            <div style={styles.formGrid}>
+              <div>
+                <label style={styles.label}>Nature of Case</label>
+                <select style={styles.input} value={form.caseType} onChange={(e) => updateForm("caseType", e.target.value)}>
+                  {caseTypes.map((type) => (
+                    <option key={type} value={type}>{type}</option>
+                  ))}
+                </select>
+              </div>
 
-          <TabsContent value="new-case">
-            <Card className="rounded-2xl shadow-sm">
-              <CardHeader>
-                <CardTitle>Create Litigation File</CardTitle>
-              </CardHeader>
-              <CardContent className="grid gap-6">
-                <div className="grid gap-4 md:grid-cols-2">
-                  <div className="space-y-2">
-                    <Label>Nature of Case</Label>
-                    <Select value={form.caseType} onValueChange={(value) => setForm({ ...form, caseType: value })}>
-                      <SelectTrigger><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        {caseTypes.map((type) => <SelectItem key={type} value={type}>{type}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
-                  </div>
+              <div>
+                <label style={styles.label}>Before Which Court of Law</label>
+                <select style={styles.input} value={form.court} onChange={(e) => updateForm("court", e.target.value)}>
+                  {courts.map((court) => (
+                    <option key={court} value={court}>{court}</option>
+                  ))}
+                </select>
+              </div>
 
-                  <div className="space-y-2">
-                    <Label>Before Which Court of Law</Label>
-                    <Select value={form.court} onValueChange={(value) => setForm({ ...form, court: value })}>
-                      <SelectTrigger><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        {courts.map((court) => <SelectItem key={court} value={court}>{court}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
-                  </div>
+              <div style={styles.fullWidth}>
+                <label style={styles.label}>Party Name</label>
+                <input style={styles.input} value={form.partyName} onChange={(e) => updateForm("partyName", e.target.value)} placeholder="e.g. A v. B / Client Name / Opposite Party" />
+              </div>
 
-                  <div className="space-y-2 md:col-span-2">
-                    <Label>Party Name</Label>
-                    <Input
-                      placeholder="e.g. A v. B / Client Name / Opposite Party"
-                      value={form.partyName}
-                      onChange={(e) => setForm({ ...form, partyName: e.target.value })}
-                    />
-                  </div>
+              <div>
+                <label style={styles.label}>Location / City of Litigation</label>
+                <input style={styles.input} value={form.litigationCity} onChange={(e) => updateForm("litigationCity", e.target.value)} placeholder="Enter city or location" />
+              </div>
 
-                  <div className="space-y-2">
-                    <Label>Stage of the Case</Label>
-                    <Select value={form.stage} onValueChange={(value) => setForm({ ...form, stage: value })}>
-                      <SelectTrigger><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        {stages.map((stage) => <SelectItem key={stage} value={stage}>{stage}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
-                  </div>
+              <div>
+                <label style={styles.label}>Stage of the Case</label>
+                <select style={styles.input} value={form.stage} onChange={(e) => updateForm("stage", e.target.value)}>
+                  {stages.map((stage) => (
+                    <option key={stage} value={stage}>{stage}</option>
+                  ))}
+                </select>
+              </div>
 
-                  <div className="space-y-2">
-                    <Label>Fees Paid by Client</Label>
-                    <Input
-                      type="number"
-                      placeholder="Enter amount"
-                      value={form.clientFeesPaid}
-                      onChange={(e) => setForm({ ...form, clientFeesPaid: e.target.value })}
-                    />
-                  </div>
+              <div>
+                <label style={styles.label}>Actual Case Number Given by Court</label>
+                <input style={styles.input} value={form.actualCourtCaseNumber} onChange={(e) => updateForm("actualCourtCaseNumber", e.target.value)} placeholder="e.g. CS/241/2026" />
+              </div>
 
-                  <div className="space-y-2">
-                    <Label>Amount Spent on Case</Label>
-                    <Input
-                      type="number"
-                      placeholder="Enter amount"
-                      value={form.amountSpent}
-                      onChange={(e) => setForm({ ...form, amountSpent: e.target.value })}
-                    />
-                  </div>
+              <div>
+                <label style={styles.label}>Next Date of Hearing</label>
+                <input type="date" style={styles.input} value={form.nextHearingDate} onChange={(e) => updateForm("nextHearingDate", e.target.value)} />
+              </div>
 
-                  <div className="space-y-2 md:col-span-2">
-                    <Label>Notes / Reporting Summary</Label>
-                    <Textarea
-                      placeholder="Add facts, hearing notes, status update, internal remarks or next action items"
-                      value={form.notes}
-                      onChange={(e) => setForm({ ...form, notes: e.target.value })}
-                    />
-                  </div>
+              <div>
+                <label style={styles.label}>Fees Paid by Client</label>
+                <input type="number" style={styles.input} value={form.clientFeesPaid} onChange={(e) => updateForm("clientFeesPaid", e.target.value)} placeholder="Enter amount" />
+              </div>
 
-                  <div className="space-y-2 md:col-span-2">
-                    <Label>Upload Case Documents</Label>
-                    <div className="rounded-2xl border border-dashed bg-slate-50 p-6">
-                      <div className="flex flex-col items-start gap-3 md:flex-row md:items-center md:justify-between">
-                        <div>
-                          <p className="font-medium">Pleadings, case laws, list of documents and supporting files</p>
-                          <p className="text-sm text-slate-500">Demo upload stores file names for prototype view.</p>
-                        </div>
-                        <Label className="cursor-pointer">
-                          <div className="inline-flex items-center gap-2 rounded-xl border bg-white px-4 py-2 text-sm shadow-sm">
-                            <Upload className="h-4 w-4" /> Upload Files
-                          </div>
-                          <input type="file" multiple className="hidden" onChange={handleFileUpload} />
-                        </Label>
-                      </div>
-                      {form.documents.length > 0 && (
-                        <div className="mt-4 space-y-2">
-                          {form.documents.map((doc, idx) => (
-                            <div key={idx} className="flex items-center justify-between rounded-xl bg-white p-3 text-sm shadow-sm">
-                              <div>
-                                <p className="font-medium">{doc.name}</p>
-                                <p className="text-slate-500">{doc.category}</p>
-                              </div>
-                              <Badge variant="secondary">{doc.size}</Badge>
-                            </div>
-                          ))}
-                        </div>
-                      )}
+              <div>
+                <label style={styles.label}>Amount Spent on Case</label>
+                <input type="number" style={styles.input} value={form.amountSpent} onChange={(e) => updateForm("amountSpent", e.target.value)} placeholder="Enter amount" />
+              </div>
+
+              <div>
+                <label style={styles.label}>Client Email</label>
+                <input type="email" style={styles.input} value={form.clientEmail} onChange={(e) => updateForm("clientEmail", e.target.value)} placeholder="Enter client email" />
+              </div>
+
+              <div>
+                <label style={styles.label}>Client WhatsApp Number</label>
+                <input style={styles.input} value={form.clientWhatsapp} onChange={(e) => updateForm("clientWhatsapp", e.target.value)} placeholder="Enter WhatsApp number with country code" />
+              </div>
+
+              <div style={styles.fullWidth}>
+                <label style={styles.label}>Notes / Reporting Summary</label>
+                <textarea style={styles.textarea} value={form.notes} onChange={(e) => updateForm("notes", e.target.value)} placeholder="Add facts, notice details, hearing notes, status update, advisory remarks or next action items" />
+              </div>
+
+              <div style={styles.fullWidth}>
+                <label style={styles.label}>Upload Case Documents</label>
+                <input type="file" multiple style={styles.input} onChange={handleFileUpload} />
+                <div style={{ marginTop: 12 }}>
+                  {form.documents.map((doc, idx) => (
+                    <div key={`${doc.name}-${idx}`} style={{ ...styles.card, padding: 10, marginBottom: 8 }}>
+                      <strong>{doc.name}</strong>
+                      <div style={styles.smallText}>{doc.category} • {doc.size}</div>
                     </div>
-                  </div>
+                  ))}
                 </div>
-
-                <div className="flex flex-wrap items-center gap-3">
-                  <Button className="rounded-xl" onClick={handleCreateCase}>
-                    <Plus className="mr-2 h-4 w-4" /> Generate Case Number & Save
-                  </Button>
-                  <p className="text-sm text-slate-500">
-                    Case number is auto-generated when the case is saved.
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="case-register">
-            <Card className="rounded-2xl shadow-sm">
-              <CardHeader>
-                <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                  <CardTitle>Case Register</CardTitle>
-                  <div className="relative w-full md:w-80">
-                    <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                    <Input
-                      className="pl-9"
-                      placeholder="Search case number, party, type, court or stage"
-                      value={search}
-                      onChange={(e) => setSearch(e.target.value)}
-                    />
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="overflow-x-auto rounded-2xl border bg-white">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Case No.</TableHead>
-                        <TableHead>Nature</TableHead>
-                        <TableHead>Party Name</TableHead>
-                        <TableHead>Court</TableHead>
-                        <TableHead>Stage</TableHead>
-                        <TableHead>Fees Paid</TableHead>
-                        <TableHead>Spent</TableHead>
-                        <TableHead>Documents</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {filteredCases.map((item) => (
-                        <TableRow key={item.id}>
-                          <TableCell className="font-medium">{item.caseNumber}</TableCell>
-                          <TableCell><Badge variant="outline">{item.caseType}</Badge></TableCell>
-                          <TableCell>{item.partyName}</TableCell>
-                          <TableCell>{item.court}</TableCell>
-                          <TableCell>{item.stage}</TableCell>
-                          <TableCell>{currency(item.clientFeesPaid)}</TableCell>
-                          <TableCell>{currency(item.amountSpent)}</TableCell>
-                          <TableCell>{item.documents.length}</TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="reporting">
-            <div className="grid gap-4 xl:grid-cols-3">
-              <Card className="rounded-2xl shadow-sm xl:col-span-2">
-                <CardHeader>
-                  <CardTitle>Case Type Breakdown</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {typeBreakdown.map((item) => {
-                    const percentage = Math.round((item.count / Math.max(cases.length, 1)) * 100);
-                    return (
-                      <div key={item.type} className="space-y-2">
-                        <div className="flex items-center justify-between text-sm">
-                          <span className="font-medium">{item.type}</span>
-                          <span>{item.count} case(s)</span>
-                        </div>
-                        <Progress value={percentage} className="h-3" />
-                      </div>
-                    );
-                  })}
-                </CardContent>
-              </Card>
-
-              <Card className="rounded-2xl shadow-sm">
-                <CardHeader>
-                  <CardTitle>Financial Snapshot</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4 text-sm">
-                  <div className="rounded-xl bg-slate-50 p-4">
-                    <p className="text-slate-500">Total Fees Received</p>
-                    <p className="mt-1 text-2xl font-bold">{currency(totals.totalFees)}</p>
-                  </div>
-                  <div className="rounded-xl bg-slate-50 p-4">
-                    <p className="text-slate-500">Total Amount Spent</p>
-                    <p className="mt-1 text-2xl font-bold">{currency(totals.totalSpent)}</p>
-                  </div>
-                  <div className="rounded-xl bg-slate-50 p-4">
-                    <p className="text-slate-500">Net Position</p>
-                    <p className="mt-1 text-2xl font-bold">{currency(totals.totalFees - totals.totalSpent)}</p>
-                  </div>
-                </CardContent>
-              </Card>
+              </div>
             </div>
 
-            <Card className="mt-4 rounded-2xl shadow-sm">
-              <CardHeader>
-                <CardTitle>Stage-wise Reporting</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-                  {stages.map((stage) => {
-                    const count = cases.filter((c) => c.stage === stage).length;
-                    if (!count) return null;
-                    return (
-                      <div key={stage} className="rounded-2xl border bg-white p-4 shadow-sm">
-                        <p className="text-sm text-slate-500">{stage}</p>
-                        <p className="text-2xl font-bold">{count}</p>
+            <div style={{ marginTop: 18, display: "flex", gap: 12, flexWrap: "wrap", alignItems: "center" }}>
+              <button type="button" style={styles.primaryButton} onClick={handleCreateCase}>Generate Internal File Number & Save</button>
+              <span style={styles.smallText}>Internal file number is auto-generated when the matter is saved.</span>
+            </div>
+          </div>
+        )}
+
+        {tab === "case-register" && (
+          <div style={styles.card}>
+            <div style={{ display: "flex", gap: 12, justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", marginBottom: 16 }}>
+              <div style={styles.sectionTitle}>Case Register</div>
+              <input style={styles.search} value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search file no., court no., party, city, type, court or stage" />
+            </div>
+
+            <div style={styles.tableWrap}>
+              <table style={styles.table}>
+                <thead>
+                  <tr>
+                    <th style={styles.th}>Internal File No.</th>
+                    <th style={styles.th}>Court Case No.</th>
+                    <th style={styles.th}>Nature</th>
+                    <th style={styles.th}>Party Name</th>
+                    <th style={styles.th}>Court</th>
+                    <th style={styles.th}>City</th>
+                    <th style={styles.th}>Stage</th>
+                    <th style={styles.th}>Next Hearing</th>
+                    <th style={styles.th}>Fees Paid</th>
+                    <th style={styles.th}>Spent</th>
+                    <th style={styles.th}>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredCases.map((item) => (
+                    <tr key={item.id}>
+                      <td style={styles.td}><strong>{item.internalCaseNumber}</strong></td>
+                      <td style={styles.td}>{item.actualCourtCaseNumber || "—"}</td>
+                      <td style={styles.td}><span style={styles.badge}>{item.caseType}</span></td>
+                      <td style={styles.td}>{item.partyName}</td>
+                      <td style={styles.td}>{item.court}</td>
+                      <td style={styles.td}>{item.litigationCity || "—"}</td>
+                      <td style={styles.td}>{item.stage}</td>
+                      <td style={styles.td}>{formatDate(item.nextHearingDate)}</td>
+                      <td style={styles.td}>{currency(item.clientFeesPaid)}</td>
+                      <td style={styles.td}>{currency(item.amountSpent)}</td>
+                      <td style={styles.td}>
+                        <div style={styles.actionRow}>
+                          <button type="button" style={styles.secondaryButton} onClick={() => openInvoice(item)}>Invoice</button>
+                          <button type="button" style={styles.secondaryButton} onClick={() => openUpdate(item)}>Update</button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {tab === "reporting" && (
+          <div style={{ display: "grid", gap: 16 }}>
+            <div style={styles.reportGrid}>
+              <div style={styles.card}>
+                <div style={styles.sectionTitle}>Case Type Breakdown</div>
+                {typeBreakdown.map((item) => {
+                  const percentage = Math.round((item.count / Math.max(cases.length, 1)) * 100);
+                  return (
+                    <div key={item.type} style={{ marginBottom: 14 }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", gap: 12, fontSize: 14 }}>
+                        <span><strong>{item.type}</strong></span>
+                        <span>{item.count} case(s)</span>
                       </div>
-                    );
-                  })}
+                      <div style={styles.progressTrack}>
+                        <div style={styles.progressFill(percentage)} />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              <div style={styles.card}>
+                <div style={styles.sectionTitle}>Financial Snapshot</div>
+                <div style={{ ...styles.card, marginBottom: 10 }}>
+                  <div style={styles.cardTitle}>Total Fees Received</div>
+                  <div style={styles.cardValue}>{currency(totals.totalFees)}</div>
                 </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
+                <div style={{ ...styles.card, marginBottom: 10 }}>
+                  <div style={styles.cardTitle}>Total Amount Spent</div>
+                  <div style={styles.cardValue}>{currency(totals.totalSpent)}</div>
+                </div>
+                <div style={styles.card}>
+                  <div style={styles.cardTitle}>Net Position</div>
+                  <div style={styles.cardValue}>{currency(totals.totalFees - totals.totalSpent)}</div>
+                </div>
+              </div>
+            </div>
+
+            <div style={styles.card}>
+              <div style={styles.sectionTitle}>Stage-wise Reporting</div>
+              <div style={styles.reportGrid}>
+                {stageBreakdown.map((item) => (
+                  <div key={item.stage} style={styles.card}>
+                    <div style={styles.cardTitle}>{item.stage}</div>
+                    <div style={styles.cardValue}>{item.count}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
       </div>
+
+      {modal.open && modal.selected && (
+        <div style={styles.modalOverlay} onClick={() => setModal({ open: false, title: "", body: "", selected: null })}>
+          <div style={styles.modal} onClick={(e) => e.stopPropagation()}>
+            <div style={styles.modalTitle}>{modal.title}</div>
+            <textarea readOnly style={{ ...styles.textarea, minHeight: 280 }} value={modal.body} />
+            <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginTop: 14 }}>
+              <button
+                type="button"
+                style={styles.secondaryButton}
+                onClick={() => openEmailDraft(`${modal.title} - ${modal.selected.internalCaseNumber}`, modal.body, modal.selected.clientEmail)}
+              >
+                Send by Email
+              </button>
+              <button
+                type="button"
+                style={styles.secondaryButton}
+                onClick={() => openWhatsappDraft(modal.body, modal.selected.clientWhatsapp)}
+              >
+                Send by WhatsApp
+              </button>
+              <button
+                type="button"
+                style={styles.primaryButton}
+                onClick={() => setModal({ open: false, title: "", body: "", selected: null })}
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
