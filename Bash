@@ -1,0 +1,8 @@
+unzip litigation-fullstack-app.zip
+cd litigation-fullstack-app
+git init
+git add .
+git commit -m "Initial commit"
+git branch -M main
+git remote add origin https://github.com/YOUR_USERNAME/litigation-fullstack-app.git
+git push -u origin main
