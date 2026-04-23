@@ -1,0 +1,478 @@
+import React, { useMemo, useState } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
+import { FolderOpen, Scale, FileText, IndianRupee, BarChart3, Plus, Upload, Search } from "lucide-react";
+
+const caseTypes = [
+  "Civil",
+  "Criminal",
+  "Consumer",
+  "Family",
+  "Property",
+  "Arbitration",
+  "Labour",
+  "Company",
+  "Tax",
+  "Other",
+];
+
+const courts = [
+  "Supreme Court",
+  "High Court",
+  "District Court",
+  "Consumer Forum",
+  "Family Court",
+  "Arbitration Tribunal",
+  "Sessions Court",
+  "NCLT",
+  "Other",
+];
+
+const stages = [
+  "Pre-Litigation",
+  "Notice Stage",
+  "Filing",
+  "Admission",
+  "Evidence",
+  "Arguments",
+  "Order Reserved",
+  "Disposed",
+  "Appeal",
+];
+
+const starterCases = [
+  {
+    id: 1,
+    caseNumber: "LIT-2026-0001",
+    caseType: "Civil",
+    partyName: "ABC Developers Pvt. Ltd. v. Rohan Sharma",
+    court: "District Court",
+    stage: "Evidence",
+    clientFeesPaid: 150000,
+    amountSpent: 72000,
+    notes: "Recovery suit relating to construction dues.",
+    documents: [
+      { name: "Plaint.pdf", size: "2.4 MB", category: "Pleadings" },
+      { name: "EvidenceList.docx", size: "440 KB", category: "List of Documents" },
+    ],
+    createdAt: "2026-04-20",
+  },
+  {
+    id: 2,
+    caseNumber: "LIT-2026-0002",
+    caseType: "Consumer",
+    partyName: "Priya Verma v. XYZ Motors",
+    court: "Consumer Forum",
+    stage: "Arguments",
+    clientFeesPaid: 50000,
+    amountSpent: 18500,
+    notes: "Vehicle defect and deficiency in service matter.",
+    documents: [{ name: "Complaint.pdf", size: "1.2 MB", category: "Pleadings" }],
+    createdAt: "2026-04-21",
+  },
+];
+
+function currency(n) {
+  return new Intl.NumberFormat("en-IN", {
+    style: "currency",
+    currency: "INR",
+    maximumFractionDigits: 0,
+  }).format(Number(n || 0));
+}
+
+function generateCaseNumber(existing) {
+  const year = new Date().getFullYear();
+  const next = String(existing.length + 1).padStart(4, "0");
+  return `LIT-${year}-${next}`;
+}
+
+export default function LitigationManagementWebsite() {
+  const [cases, setCases] = useState(starterCases);
+  const [search, setSearch] = useState("");
+  const [form, setForm] = useState({
+    caseType: "Civil",
+    partyName: "",
+    court: "District Court",
+    stage: "Filing",
+    clientFeesPaid: "",
+    amountSpent: "",
+    notes: "",
+    documents: [],
+  });
+
+  const filteredCases = useMemo(() => {
+    const q = search.toLowerCase();
+    return cases.filter(
+      (c) =>
+        c.caseNumber.toLowerCase().includes(q) ||
+        c.partyName.toLowerCase().includes(q) ||
+        c.caseType.toLowerCase().includes(q) ||
+        c.court.toLowerCase().includes(q) ||
+        c.stage.toLowerCase().includes(q)
+    );
+  }, [cases, search]);
+
+  const totals = useMemo(() => {
+    const totalFees = cases.reduce((sum, c) => sum + Number(c.clientFeesPaid || 0), 0);
+    const totalSpent = cases.reduce((sum, c) => sum + Number(c.amountSpent || 0), 0);
+    const openCases = cases.filter((c) => c.stage !== "Disposed").length;
+    return { totalFees, totalSpent, openCases, totalCases: cases.length };
+  }, [cases]);
+
+  const typeBreakdown = useMemo(() => {
+    return caseTypes
+      .map((type) => ({
+        type,
+        count: cases.filter((c) => c.caseType === type).length,
+      }))
+      .filter((x) => x.count > 0);
+  }, [cases]);
+
+  const handleFileUpload = (e) => {
+    const files = Array.from(e.target.files || []);
+    const mapped = files.map((file) => ({
+      name: file.name,
+      size: `${(file.size / 1024 / 1024).toFixed(2)} MB`,
+      category: "Uploaded Document",
+    }));
+    setForm((prev) => ({ ...prev, documents: [...prev.documents, ...mapped] }));
+  };
+
+  const handleCreateCase = () => {
+    if (!form.partyName.trim()) return;
+
+    const newCase = {
+      id: Date.now(),
+      caseNumber: generateCaseNumber(cases),
+      caseType: form.caseType,
+      partyName: form.partyName,
+      court: form.court,
+      stage: form.stage,
+      clientFeesPaid: Number(form.clientFeesPaid || 0),
+      amountSpent: Number(form.amountSpent || 0),
+      notes: form.notes,
+      documents: form.documents,
+      createdAt: new Date().toISOString().slice(0, 10),
+    };
+
+    setCases((prev) => [newCase, ...prev]);
+    setForm({
+      caseType: "Civil",
+      partyName: "",
+      court: "District Court",
+      stage: "Filing",
+      clientFeesPaid: "",
+      amountSpent: "",
+      notes: "",
+      documents: [],
+    });
+  };
+
+  return (
+    <div className="min-h-screen bg-slate-50 p-4 md:p-8">
+      <div className="mx-auto max-w-7xl space-y-6">
+        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight text-slate-900">Litigation Management</h1>
+            <p className="text-sm text-slate-600">
+              Manage cases, documents, court stages, client fees, expenditure and reporting in one place.
+            </p>
+          </div>
+          <div className="flex items-center gap-2 rounded-2xl bg-white p-3 shadow-sm">
+            <Scale className="h-5 w-5" />
+            <span className="text-sm font-medium">Legal Operations Dashboard</span>
+          </div>
+        </div>
+
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+          <Card className="rounded-2xl shadow-sm">
+            <CardContent className="flex items-center justify-between p-6">
+              <div>
+                <p className="text-sm text-slate-500">Total Cases</p>
+                <p className="text-3xl font-bold">{totals.totalCases}</p>
+              </div>
+              <FolderOpen className="h-8 w-8 text-slate-500" />
+            </CardContent>
+          </Card>
+          <Card className="rounded-2xl shadow-sm">
+            <CardContent className="flex items-center justify-between p-6">
+              <div>
+                <p className="text-sm text-slate-500">Open Cases</p>
+                <p className="text-3xl font-bold">{totals.openCases}</p>
+              </div>
+              <FileText className="h-8 w-8 text-slate-500" />
+            </CardContent>
+          </Card>
+          <Card className="rounded-2xl shadow-sm">
+            <CardContent className="flex items-center justify-between p-6">
+              <div>
+                <p className="text-sm text-slate-500">Fees Paid by Clients</p>
+                <p className="text-2xl font-bold">{currency(totals.totalFees)}</p>
+              </div>
+              <IndianRupee className="h-8 w-8 text-slate-500" />
+            </CardContent>
+          </Card>
+          <Card className="rounded-2xl shadow-sm">
+            <CardContent className="flex items-center justify-between p-6">
+              <div>
+                <p className="text-sm text-slate-500">Amount Spent</p>
+                <p className="text-2xl font-bold">{currency(totals.totalSpent)}</p>
+              </div>
+              <BarChart3 className="h-8 w-8 text-slate-500" />
+            </CardContent>
+          </Card>
+        </div>
+
+        <Tabs defaultValue="new-case" className="space-y-4">
+          <TabsList className="grid w-full grid-cols-1 gap-2 rounded-2xl bg-transparent p-0 md:grid-cols-3">
+            <TabsTrigger value="new-case" className="rounded-2xl border bg-white py-3 shadow-sm">New Case</TabsTrigger>
+            <TabsTrigger value="case-register" className="rounded-2xl border bg-white py-3 shadow-sm">Case Register</TabsTrigger>
+            <TabsTrigger value="reporting" className="rounded-2xl border bg-white py-3 shadow-sm">Reporting</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="new-case">
+            <Card className="rounded-2xl shadow-sm">
+              <CardHeader>
+                <CardTitle>Create Litigation File</CardTitle>
+              </CardHeader>
+              <CardContent className="grid gap-6">
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label>Nature of Case</Label>
+                    <Select value={form.caseType} onValueChange={(value) => setForm({ ...form, caseType: value })}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        {caseTypes.map((type) => <SelectItem key={type} value={type}>{type}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Before Which Court of Law</Label>
+                    <Select value={form.court} onValueChange={(value) => setForm({ ...form, court: value })}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        {courts.map((court) => <SelectItem key={court} value={court}>{court}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2 md:col-span-2">
+                    <Label>Party Name</Label>
+                    <Input
+                      placeholder="e.g. A v. B / Client Name / Opposite Party"
+                      value={form.partyName}
+                      onChange={(e) => setForm({ ...form, partyName: e.target.value })}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Stage of the Case</Label>
+                    <Select value={form.stage} onValueChange={(value) => setForm({ ...form, stage: value })}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        {stages.map((stage) => <SelectItem key={stage} value={stage}>{stage}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Fees Paid by Client</Label>
+                    <Input
+                      type="number"
+                      placeholder="Enter amount"
+                      value={form.clientFeesPaid}
+                      onChange={(e) => setForm({ ...form, clientFeesPaid: e.target.value })}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Amount Spent on Case</Label>
+                    <Input
+                      type="number"
+                      placeholder="Enter amount"
+                      value={form.amountSpent}
+                      onChange={(e) => setForm({ ...form, amountSpent: e.target.value })}
+                    />
+                  </div>
+
+                  <div className="space-y-2 md:col-span-2">
+                    <Label>Notes / Reporting Summary</Label>
+                    <Textarea
+                      placeholder="Add facts, hearing notes, status update, internal remarks or next action items"
+                      value={form.notes}
+                      onChange={(e) => setForm({ ...form, notes: e.target.value })}
+                    />
+                  </div>
+
+                  <div className="space-y-2 md:col-span-2">
+                    <Label>Upload Case Documents</Label>
+                    <div className="rounded-2xl border border-dashed bg-slate-50 p-6">
+                      <div className="flex flex-col items-start gap-3 md:flex-row md:items-center md:justify-between">
+                        <div>
+                          <p className="font-medium">Pleadings, case laws, list of documents and supporting files</p>
+                          <p className="text-sm text-slate-500">Demo upload stores file names for prototype view.</p>
+                        </div>
+                        <Label className="cursor-pointer">
+                          <div className="inline-flex items-center gap-2 rounded-xl border bg-white px-4 py-2 text-sm shadow-sm">
+                            <Upload className="h-4 w-4" /> Upload Files
+                          </div>
+                          <input type="file" multiple className="hidden" onChange={handleFileUpload} />
+                        </Label>
+                      </div>
+                      {form.documents.length > 0 && (
+                        <div className="mt-4 space-y-2">
+                          {form.documents.map((doc, idx) => (
+                            <div key={idx} className="flex items-center justify-between rounded-xl bg-white p-3 text-sm shadow-sm">
+                              <div>
+                                <p className="font-medium">{doc.name}</p>
+                                <p className="text-slate-500">{doc.category}</p>
+                              </div>
+                              <Badge variant="secondary">{doc.size}</Badge>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-3">
+                  <Button className="rounded-xl" onClick={handleCreateCase}>
+                    <Plus className="mr-2 h-4 w-4" /> Generate Case Number & Save
+                  </Button>
+                  <p className="text-sm text-slate-500">
+                    Case number is auto-generated when the case is saved.
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="case-register">
+            <Card className="rounded-2xl shadow-sm">
+              <CardHeader>
+                <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                  <CardTitle>Case Register</CardTitle>
+                  <div className="relative w-full md:w-80">
+                    <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                    <Input
+                      className="pl-9"
+                      placeholder="Search case number, party, type, court or stage"
+                      value={search}
+                      onChange={(e) => setSearch(e.target.value)}
+                    />
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="overflow-x-auto rounded-2xl border bg-white">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Case No.</TableHead>
+                        <TableHead>Nature</TableHead>
+                        <TableHead>Party Name</TableHead>
+                        <TableHead>Court</TableHead>
+                        <TableHead>Stage</TableHead>
+                        <TableHead>Fees Paid</TableHead>
+                        <TableHead>Spent</TableHead>
+                        <TableHead>Documents</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {filteredCases.map((item) => (
+                        <TableRow key={item.id}>
+                          <TableCell className="font-medium">{item.caseNumber}</TableCell>
+                          <TableCell><Badge variant="outline">{item.caseType}</Badge></TableCell>
+                          <TableCell>{item.partyName}</TableCell>
+                          <TableCell>{item.court}</TableCell>
+                          <TableCell>{item.stage}</TableCell>
+                          <TableCell>{currency(item.clientFeesPaid)}</TableCell>
+                          <TableCell>{currency(item.amountSpent)}</TableCell>
+                          <TableCell>{item.documents.length}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="reporting">
+            <div className="grid gap-4 xl:grid-cols-3">
+              <Card className="rounded-2xl shadow-sm xl:col-span-2">
+                <CardHeader>
+                  <CardTitle>Case Type Breakdown</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {typeBreakdown.map((item) => {
+                    const percentage = Math.round((item.count / Math.max(cases.length, 1)) * 100);
+                    return (
+                      <div key={item.type} className="space-y-2">
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="font-medium">{item.type}</span>
+                          <span>{item.count} case(s)</span>
+                        </div>
+                        <Progress value={percentage} className="h-3" />
+                      </div>
+                    );
+                  })}
+                </CardContent>
+              </Card>
+
+              <Card className="rounded-2xl shadow-sm">
+                <CardHeader>
+                  <CardTitle>Financial Snapshot</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4 text-sm">
+                  <div className="rounded-xl bg-slate-50 p-4">
+                    <p className="text-slate-500">Total Fees Received</p>
+                    <p className="mt-1 text-2xl font-bold">{currency(totals.totalFees)}</p>
+                  </div>
+                  <div className="rounded-xl bg-slate-50 p-4">
+                    <p className="text-slate-500">Total Amount Spent</p>
+                    <p className="mt-1 text-2xl font-bold">{currency(totals.totalSpent)}</p>
+                  </div>
+                  <div className="rounded-xl bg-slate-50 p-4">
+                    <p className="text-slate-500">Net Position</p>
+                    <p className="mt-1 text-2xl font-bold">{currency(totals.totalFees - totals.totalSpent)}</p>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            <Card className="mt-4 rounded-2xl shadow-sm">
+              <CardHeader>
+                <CardTitle>Stage-wise Reporting</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+                  {stages.map((stage) => {
+                    const count = cases.filter((c) => c.stage === stage).length;
+                    if (!count) return null;
+                    return (
+                      <div key={stage} className="rounded-2xl border bg-white p-4 shadow-sm">
+                        <p className="text-sm text-slate-500">{stage}</p>
+                        <p className="text-2xl font-bold">{count}</p>
+                      </div>
+                    );
+                  })}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
+      </div>
+    </div>
+  );
+}
